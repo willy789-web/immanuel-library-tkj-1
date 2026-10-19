@@ -1,18 +1,37 @@
-<?php require_once __DIR__ . '/../config/bootstrap.php';
-function getUsers(?string $search = null): array
+<?php
+
+function getUsers()
 {
-    $d = db();
-    return array_values(array_map(fn($u) => array_diff_key($u, ['password' => true]), array_filter($d['users'], fn($u) => !$search || stripos($u['name'] . ' ' . $u['email'], $search) !== false)));
+  $users = [
+    ["id" => 1, "name" => "Admin Utama",    "email" => "admin@ski.sch.id",               "role" => "admin"],
+    ["id" => 2, "name" => "Budi Santoso",   "email" => "budi.santoso@siswa.ski.sch.id",  "role" => "member"],
+    ["id" => 3, "name" => "Siti Aminah",    "email" => "siti.aminah@siswa.ski.sch.id",   "role" => "member"],
+    ["id" => 4, "name" => "Richard Marcell","email" => "richard.m@ski.sch.id",           "role" => "admin"],
+  ];
+
+  return $users;
 }
-function getUser(int $id): ?array
+
+function getUser()
 {
-    $u = findById(db()['users'], $id);
-    if ($u)
-        unset($u['password']);
-    return $u;
+  $user = [
+    "id"    => 2,
+    "name"  => "Budi Santoso",
+    "email" => "budi.santoso@siswa.ski.sch.id",
+    "role"  => "member",
+  ];
+
+  return $user;
 }
-function getProfile(int $id): array
+
+function getProfile()
 {
-    $u = findById(db()['users'], $id);
-    return ['phone' => $u['phone'] ?? '', 'address' => $u['address'] ?? '', 'bio' => $u['bio'] ?? ''];
+  $profile = [
+    "user_id" => 2,
+    "phone"   => "0812-3456-7890",
+    "address" => "Jl. Merdeka No. 21, Pontianak, Kalimantan Barat",
+    "bio"     => "Murid kelas XI TKJ yang gemar membaca novel fiksi dan buku pengembangan diri.",
+  ];
+
+  return $profile;
 }

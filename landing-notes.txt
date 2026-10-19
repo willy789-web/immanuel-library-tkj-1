@@ -1,5 +1,33 @@
+<<<<<<< HEAD
 1. Apa keuntungan memisahkan header dan footer menjadi file component tersendiri, dibandingkan menuliskannya langsung berulang-ulang di index.php?
 Memisahkan header dan footer menjadi komponen tersendiri memberikan keuntungan utama berupa kemudahan pemeliharaan kode, karena perubahan menu atau logo cukup dilakukan pada satu file tanpa harus mengedit setiap halaman satu per satu. Pendekatan ini menerapkan prinsip Don't Repeat Yourself (DRY) untuk mencegah duplikasi kode, menjaga konsistensi tampilan di seluruh situs, serta membuat struktur file utama seperti index.php menjadi jauh lebih rapi karena berfokus pada konten spesifik. Selain itu, proses pengembangan halaman baru menjadi lebih efisien karena komponen umum tinggal diimpor menggunakan perintah include atau require.
 
 2. Perhatikan halaman-halaman admin (Buku, Kategori, Penulis, Pengguna, Profil) pada Bagian 2 - bagian mana pada halaman-halaman tersebut yang mengalami masalah yang sama seperti header/footer sebelum dipisah?
 Pada halaman-halaman admin seperti Buku, Kategori, Penulis, Pengguna, dan Profil, bagian yang mengalami masalah duplikasi serupa adalah elemen sidebar atau navigasi samping, topbar atau navigasi atas yang berisi informasi akun dan tombol logout, serta pemanggilan pustaka luar seperti file CSS dan JavaScript di bagian <head> maupun sebelum penutup tag </body>. Tanpa pemisahan komponen, penambahan menu baru atau pembaruan pustaka CSS/JS akan memaksa pengembang mengedit kodenya secara manual di setiap file halaman admin tersebut.
+=======
+CATATAN REFLEKSI - LANDING PAGE IMMANUEL LIBRARY
+
+1. Apa keuntungan memisahkan header dan footer menjadi file component tersendiri,
+   dibandingkan menuliskannya langsung berulang-ulang di index.php?
+
+   Dengan memisahkan header dan footer ke components/landing/header.php dan
+   components/landing/footer.php, markup yang sama cukup ditulis satu kali lalu
+   disertakan ke halaman mana pun dengan require_once. Jika ada perubahan, misalnya
+   menambah menu navigasi atau mengganti teks hak cipta, cukup mengubah satu file dan
+   seluruh halaman yang memakainya ikut berubah. Hal ini mengurangi risiko tampilan
+   tidak konsisten karena lupa mengubah salah satu salinan. File index.php juga menjadi
+   lebih pendek dan fokus pada isi halaman (hero, statistik, fitur), sehingga lebih mudah
+   dibaca dan dirawat.
+
+2. Bagian mana pada halaman-halaman admin (Buku, Kategori, Penulis, Pengguna, Profil)
+   yang mengalami masalah yang sama seperti header/footer sebelum dipisah?
+
+   Bagian sidebar (elemen <aside> berisi menu Beranda, Buku, Kategori, Penulis, Pengguna,
+   dan Profil Saya) dan topbar (elemen <header> berisi judul halaman serta info pengguna)
+   ditulis ulang secara identik di 14 file halaman admin. Akibatnya, jika satu menu
+   sidebar diubah atau ditambah, kita harus mengedit 14 file satu per satu dan mudah ada
+   yang terlewat. Topbar juga hanya berbeda pada judul dan subjudulnya, sehingga lebih
+   tepat dijadikan satu component yang menerima variabel $pageTitle dan $pageSubtitle.
+   Selain itu, data pada halaman admin masih ditulis sebagai array mentah di tiap file,
+   bukan diambil dari satu sumber (repository function).
+>>>>>>> f88312c (feat: update sourcode)

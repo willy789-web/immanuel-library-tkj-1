@@ -1,20 +1,58 @@
-<?php require_once '../../config/bootstrap.php';
-requireLogin('../../pages/auth/login.php');
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['store']))
-    redirect('../../pages/books/create.php');
-$title = trim($_POST['title'] ?? '');
-$isbn = trim($_POST['isbn'] ?? '');
-$year = (int) ($_POST['year'] ?? 0);
-$stock = (int) ($_POST['stock'] ?? 0);
-$cat = (int) ($_POST['category_id'] ?? 0);
-$desc = trim($_POST['description'] ?? '');
-$authors = array_values(array_unique(array_map('intval', $_POST['author_ids'] ?? [])));
-if ($title === '' || $year < 0 || $stock < 0 || !findById(db()['categories'], $cat)) {
-    flash('Data buku belum valid.', 'error');
-    redirect('../../pages/books/create.php');
+<?php
+require_once __DIR__ . "/../../config/database.php";
+
+if (isset($_POST['store']) && $_SERVER['REQUEST_METHOD'] === "POST") {
+   print_r($pdo);
+   try {
+      $pdo->beginTransaction();
+
+      $title = htmlspecialchars($_POST['title']);
+      $isbn = htmlspecialchars($_POST['isbn']);
+      $year = htmlspecialchars($_POST['year']);
+      $stock = htmlspecialchars($_POST['stock']);
+      $description = htmlspecialchars($_POST['description']);
+      $categoryId = htmlspecialchars($_POST['category_id']);
+
+      $query = "insert into books (title, isbn, year, stock, description, category_id)
+       values (:title, :isbn. :year, :stock, :description, :category_id)";
+
+      $stmt = $pdo->prepare($query);
+      $stmt->execute([
+         'title' => $title,
+         'isbn' => $isbn,
+         'year' => $year,
+         'stock' => $stock,   
+         'description' => $description,
+         'category_id' => $categoryId
+
+      ]);
+
+      $bookId = $pdo->lastInsertId();
+
+      $query = "insert into book_author (book_id, author_id) values (:book_id, :author_id)";
+      $stmt = $pdo->prepare($query);
+
+      $authorIds = $_POST['author_ids'];
+
+      foreach ($authorIds as $authorId) {
+      $stmt->execute([
+        'book_id' => $bookId,
+        'author_id' => htmlspecialchars($authorId)
+         ]);
+      }
+   
+
+      $pdo->commit();
+
+      header('Location: ../../pages/books/index.php');
+      exit;
+   
+
+   } catch (PDOException $e) {
+      $pdo->rollBack();
+      throw $e;
+   }
+   
 }
-$d = db();
-$d['books'][] = ['id' => nextId($d['books']), 'title' => $title, 'isbn' => $isbn, 'year' => $year, 'stock' => $stock, 'category_id' => $cat, 'description' => $desc, 'author_ids' => $authors];
-saveDb($d);
-flash('Buku berhasil ditambahkan.');
-redirect('../../pages/books/index.php');
+
+?>

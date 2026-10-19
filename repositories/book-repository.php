@@ -1,3 +1,79 @@
-<?php require_once __DIR__.'/../config/bootstrap.php';
-function getBooks(?string $search=null, ?int $categoryId=null): array { $d=db(); $cats=array_column($d['categories'],'name','id'); $authors=array_column($d['authors'],'name','id'); $out=[]; foreach($d['books'] as $b){ if($search && stripos($b['title'].' '.($b['isbn']??''),$search)===false) continue; if($categoryId && (int)$b['category_id']!==$categoryId) continue; $b['category']=$cats[$b['category_id']]??'-'; $b['authors']=array_map(fn($id)=>$authors[$id]??'Unknown',$b['author_ids']??[]); $out[]=$b; } return $out; }
-function getBook(int $id): ?array { $d=db(); $b=findById($d['books'],$id); if(!$b)return null; $b['category']=findById($d['categories'],(int)$b['category_id'])['name']??'-'; $b['authors']=[]; foreach($b['author_ids']??[] as $aid){$a=findById($d['authors'],(int)$aid);if($a)$b['authors'][]=$a['name'];} return $b; }
+<?php
+
+require_once __DIR__ . "/../config/database.php";
+
+function getBooks()
+{
+  global $pdo;
+
+  $query = "select b.id, b.title, b.stock, c.name as category from books b
+          left join categories c on b.category_id = c.id
+          ";
+
+  $stmt = $pdo->prepare($query);
+  $stmt->execute();
+
+  $books = $stmt->fetchALL();
+ 
+
+  $query = "select ba.book_id, a.name from book_author ba
+            left join authors a on ba.author_id = a.id
+
+           ";
+
+$stmt = $pdo->prepare($query);
+$stmt->execute();
+
+$bookAuthors = $stmt->fetchall();
+
+$bookByAuthors = [];
+foreach($bookAuthors as $bookAuthor) {
+  $bookAuthors[$bookAuthor['book_id']] = $bookAuthor['name']; 
+}
+
+foreach($books as $index => $book) {
+  $book[$index]['authors'] = $bookByAuthors[$book['id']] ?? [];
+}
+
+
+  return $books;
+}
+
+function getBook($id)
+{
+  global $pdo;
+
+  $query = "select id, title, isbn, year, stock, category_id, description from books where id = :id";
+  $stmt = $pdo->prepare($query);
+  $stmt->execute([
+    'id' => $id
+]);
+
+
+
+  $book = $stmt->fetch();
+
+  if (!$book) {
+    header("Location: ../books/index.php");
+    exit;
+    }
+
+    $query = "select a.id from book_author ba
+    left join authors a on ba.author_id = a.id
+    where ba.book_id = :book_id
+    ";
+
+    $stmt = $pdo->prepare($query);
+
+    $stmt->execute([
+    'book_id' => $book['id']
+    ]);
+
+   $authorIds = $stmt->fetchAll();
+
+    $book['author_ids'] = array_column($authorIds, 'id');
+
+
+
+  return $book;
+}

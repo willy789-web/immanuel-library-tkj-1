@@ -1,23 +1,72 @@
-<?php require_once '../../config/bootstrap.php';
-requireLogin('../../pages/auth/login.php');
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['update']))
-    redirect('../../pages/books/index.php');
-$id = (int) ($_POST['id'] ?? 0);
-$d = db();
-$i = array_search($id, array_column($d['books'], 'id'));
-if ($i === false) {
-    flash('Buku tidak ditemukan.', 'error');
-    redirect('../../pages/books/index.php');
+<?php
+require_once __DIR__ . "/../../config/database.php";
+
+if (isset($_POST['update']) && $_SERVER['REQUEST_METHOD'] === "POST") {
+    try {
+        $pdo->beginTransaction();
+
+        $id = htmlspecialchars($_POST['id']);
+        $title = htmlspecialchars($_POST['title']);
+        $isbn = htmlspecialchars($_POST['isbn']);
+        $year = htmlspecialchars($_POST['year']);
+        $stock = htmlspecialchars($_POST['stock']);
+        $categoryId = htmlspecialchars($_POST['category_id']);
+        $description = htmlspecialchars($_POST['description']);
+        $authorIds = isset($_POST['author_ids']) ? $_POST['author_ids'] : [];
+
+
+
+        // update
+        $query = "update books set title = :title, isbn = :isbn,
+        year = :year, stock = :stock, category_id = :category_id,
+        description = :description where id = :id
+        ";
+
+        $stmt = $pdo->prepare($query);
+
+        $stmt->execute([
+            'title' => $title,
+            'isbn' => $isbn,
+            'year' => $year,
+            'stock' => $stock,
+            'category_id' => $categoryId,
+            'description' => $description,
+            'id' => $id
+        ]);
+
+
+        // dalate
+        $query = "delete from book_author where book_id = :book_id";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([
+        'book_id' => $id
+        
+        ]);
+
+        // insert 
+        $query = "insert into book_author (book_id, author_id) values (:book_id, :author_id)";
+        $stmt = $pdo->prepare($query);
+
+        $authorIds = isset($_POST['author_ids']) ? $_POST['author_ids'] : [];
+        foreach ($authorIds as $authorId) {
+        $stmt->execute([
+            'book_id' => $id,
+            'author_id' => htmlspecialchars($authorId)
+    ]);
 }
-$title = trim($_POST['title'] ?? '');
-$cat = (int) ($_POST['category_id'] ?? 0);
-$year = (int) ($_POST['year'] ?? 0);
-$stock = (int) ($_POST['stock'] ?? 0);
-if ($title === '' || $year < 0 || $stock < 0 || !findById($d['categories'], $cat)) {
-    flash('Data buku belum valid.', 'error');
-    redirect('../../pages/books/edit.php?id=' . $id);
+
+$pdo->commit();
+
+header('Location: ../../pages/books/index.php');
+exit;
+
+
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }
-$d['books'][$i] = array_merge($d['books'][$i], ['title' => $title, 'isbn' => trim($_POST['isbn'] ?? ''), 'year' => $year, 'stock' => $stock, 'category_id' => $cat, 'description' => trim($_POST['description'] ?? ''), 'author_ids' => array_values(array_unique(array_map('intval', $_POST['author_ids'] ?? [])))]);
-saveDb($d);
-flash('Buku berhasil diperbarui.');
-redirect('../../pages/books/index.php');
+  
+
+
+?>
